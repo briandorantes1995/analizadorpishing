@@ -47,7 +47,8 @@ func main() {
 		}
 
 		headers := AnalizarCabecerasAutenticacion(env)
-		println(headers)
+		fmt.Printf("Authentication-Results: SPF=%s, DKIM=%s, DMARC=%s\n", headers.SPF, headers.DKIM, headers.DMARC)
+		fmt.Printf("%+v\n", headers.IP)
 		urls := ExtraerURLs(env.Text, env.HTML)
 
 		sumary := Summary{

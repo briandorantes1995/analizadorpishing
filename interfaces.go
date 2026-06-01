@@ -8,6 +8,7 @@ type AuthVerdict struct {
 	SPF   string `json:"spf"`
 	DKIM  string `json:"dkim"`
 	DMARC string `json:"dmarc"`
+	IP    *IPInfo
 }
 
 type Summary struct {
@@ -22,6 +23,13 @@ type Attachment struct {
 	ContentType string      `json:"content_type"`
 	Hash        string      `json:"hash"`
 	Results     interface{} `json:"results"`
+}
+
+type IPInfo struct {
+	Status  string `json:"status"`
+	Country string `json:"country"`
+	City    string `json:"city"`
+	Query   string `json:"query"`
 }
 
 type Attachments []Attachment
