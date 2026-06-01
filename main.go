@@ -46,9 +46,8 @@ func main() {
 			return
 		}
 
-		// Headers can be retrieved via Envelope.GetHeader(name).
-		fmt.Printf("From: %v\n", env.GetHeader("From"))
-
+		headers := AnalizarCabecerasAutenticacion(env)
+		println(headers)
 		urls := ExtraerURLs(env.Text, env.HTML)
 
 		sumary := Summary{
