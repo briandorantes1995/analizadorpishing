@@ -9,9 +9,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jhillyerd/enmime"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, reading directly from system environment")
+	}
+
 	r := gin.Default()
 	r.MaxMultipartMemory = 50 << 20
 
@@ -28,7 +33,7 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println(fileHeader.Filename)
+
 		file, err := fileHeader.Open()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -44,41 +49,35 @@ func main() {
 		// Headers can be retrieved via Envelope.GetHeader(name).
 		fmt.Printf("From: %v\n", env.GetHeader("From"))
 
-		// Address-type headers can be parsed into a list of decoded mail.Address structs.
-		alist, _ := env.AddressList("To")
-		for _, addr := range alist {
-			fmt.Printf("To: %s <%s>\n", addr.Name, addr.Address)
+		urls := ExtraerURLs(env.Text, env.HTML)
+
+		sumary := Summary{
+			From:              env.GetHeader("From"),
+			Subject:           env.GetHeader("Subject"),
+			Attachments_count: len(env.Attachments),
+			URLS_count:        len(urls),
 		}
-
-		// enmime can decode quoted-printable headers.
-		fmt.Printf("Subject: %v\n", env.GetHeader("Subject"))
-
-		// The plain text body is available as mime.Text.
-		fmt.Printf("Text Body: %v chars\n", len(env.Text))
-
-		// The HTML body is stored in mime.HTML.
-		fmt.Printf("HTML Body: %v chars\n", len(env.HTML))
-
-		// mime.Inlines is a slice of inlined attacments.
-		fmt.Printf("Inlines: %v\n", len(env.Inlines))
-
-		// mime.Attachments contains the non-inline attachments.
-		fmt.Printf("Attachments: %v\n", len(env.Attachments))
 
 		attachments := make(Attachments, 0, len(env.Attachments))
 
 		for _, att := range env.Attachments {
 			hash := sha256.Sum256(att.Content)
 			hashString := hex.EncodeToString(hash[:])
+			results, err := virusTotal(&hashString)
+			if err != nil {
+				log.Fatal(err)
+			}
 			attachments = append(attachments, Attachment{
 				Filename:    att.FileName,
 				ContentType: att.ContentType,
 				Hash:        hashString,
+				Results:     results,
 			})
 		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"message":     "Healthy",
+			"summary":     sumary,
 			"attachments": attachments,
 		})
 
