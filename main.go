@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
@@ -62,6 +64,23 @@ func main() {
 
 		// mime.Attachments contains the non-inline attachments.
 		fmt.Printf("Attachments: %v\n", len(env.Attachments))
+
+		attachments := make([]Attachment, len(env.Attachments))
+
+		for _, att := range env.Attachments {
+			hash := sha256.Sum256(att.Content)
+			hashString := hex.EncodeToString(hash[:])
+			attachments = append(attachments, Attachment{
+				Filename:    att.FileName,
+				ContentType: att.ContentType,
+				Hash:        hashString,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message":     "Healthy",
+			"attachments": attachments,
+		})
 
 	})
 
