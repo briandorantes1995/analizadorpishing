@@ -10,6 +10,4 @@ type Attachment struct {
 	Hash        string `json:"hash"`
 }
 
-type Attachments []struct {
-	Attachments []Attachment `json:"attachments"`
-}
+type Attachments []Attachment

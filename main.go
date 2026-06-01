@@ -65,7 +65,7 @@ func main() {
 		// mime.Attachments contains the non-inline attachments.
 		fmt.Printf("Attachments: %v\n", len(env.Attachments))
 
-		attachments := make([]Attachment, len(env.Attachments))
+		attachments := make(Attachments, 0, len(env.Attachments))
 
 		for _, att := range env.Attachments {
 			hash := sha256.Sum256(att.Content)
