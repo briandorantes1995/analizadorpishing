@@ -33,3 +33,28 @@ type IPInfo struct {
 }
 
 type Attachments []Attachment
+
+type URLScanResponse struct {
+	Uuid       string `json:"uuid"`
+	Visibility string `json:"visibility"`
+	Url        string `json:"url"`
+	Country    string `json:"country"`
+}
+
+type URLVerdict struct {
+	Overall   interface{} `json:"overall"`
+	Urlscan   interface{} `json:"urlscan"`
+	Engines   interface{} `json:"engines"`
+	Community interface{} `json:"community"`
+}
+
+type URLScanResult struct {
+	URLVERDICT URLVerdict `json:"verdicts"`
+}
+
+type ApiResponse struct {
+	Message        string      `json:"message"`
+	Authentication AuthVerdict `json:"authentication"`
+	Summary        Summary     `json:"summary"`
+	Attachments    Attachments `json:"attachments"`
+}

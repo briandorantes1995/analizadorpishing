@@ -9,7 +9,6 @@ import (
 
 func virusTotal(sha256 *string) (any, error) {
 	virusapikey := os.Getenv("VIRUS_API_KEY")
-	fmt.Println(virusapikey)
 
 	if virusapikey == "" {
 		return nil, fmt.Errorf("VIRUS_API_KEY not configured")

@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
 
 	"github.com/jhillyerd/enmime"
@@ -22,6 +24,86 @@ func fetchIp(ip string) (*IPInfo, error) {
 	}
 
 	return &info, nil
+}
+
+func StartURLScan(targetURL, apiKey string) (*URLScanResponse, error) {
+	apikey := os.Getenv("URLSCAN_API_KEY")
+
+	if apikey == "" {
+		return nil, fmt.Errorf("URLSCAN_API_KEY not configured")
+	}
+
+	payload := map[string]any{
+		"url":        targetURL,
+		"visibility": "public",
+		"country":    "mx",
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(
+		http.MethodPost,
+		"https://urlscan.io/api/v1/scan/",
+		bytes.NewBuffer(body),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("API-Key", apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var scanResp URLScanResponse
+	if err := json.NewDecoder(resp.Body).Decode(&scanResp); err != nil {
+		return nil, err
+	}
+
+	return &scanResp, nil
+}
+
+func GetURLScanResult(uuid, apiKey string) (*URLScanResult, error) {
+	apikey := os.Getenv("URLSCAN_API_KEY")
+
+	if apikey == "" {
+		return nil, fmt.Errorf("URLSCAN_API_KEY not configured")
+	}
+	url := fmt.Sprintf(
+		"https://urlscan.io/api/v1/result/%s/",
+		uuid,
+	)
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("API-Key", apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("scan not ready yet: %s", resp.Status)
+	}
+
+	var result URLScanResult
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
 }
 
 func ExtraerURLs(texto string, html string) []string {
