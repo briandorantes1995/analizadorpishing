@@ -52,6 +52,8 @@ type URLScanResult struct {
 	URLVERDICT URLVerdict `json:"verdicts"`
 }
 
+type URLScanResults []URLScanResult
+
 type ApiResponse struct {
 	Message        string      `json:"message"`
 	Authentication AuthVerdict `json:"authentication"`

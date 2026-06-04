@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -48,13 +47,6 @@ func RegisterRoutes(r *gin.Engine) {
 
 		headers := AnalizarCabecerasAutenticacion(env)
 
-		fmt.Printf(
-			"Authentication-Results: SPF=%s, DKIM=%s, DMARC=%s\n",
-			headers.SPF,
-			headers.DKIM,
-			headers.DMARC,
-		)
-
 		urls := ExtraerURLs(env.Text, env.HTML)
 
 		sumary := Summary{
@@ -84,10 +76,13 @@ func RegisterRoutes(r *gin.Engine) {
 			})
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"message":     "Healthy",
-			"summary":     sumary,
-			"attachments": attachments,
-		})
+		response := ApiResponse{
+			Message:        "Healthy",
+			Authentication: headers,
+			Summary:        sumary,
+			Attachments:    attachments,
+		}
+
+		c.JSON(http.StatusOK, response)
 	})
 }
