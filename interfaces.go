@@ -41,6 +41,8 @@ type URLScanResponse struct {
 	Country    string `json:"country"`
 }
 
+type URLScanResponses []URLScanResponse
+
 type URLVerdict struct {
 	Overall   interface{} `json:"overall"`
 	Urlscan   interface{} `json:"urlscan"`
@@ -49,7 +51,7 @@ type URLVerdict struct {
 }
 
 type URLScanResult struct {
-	URLVERDICT URLVerdict `json:"verdicts"`
+	Verdict URLVerdict `json:"verdicts"`
 }
 
 type URLScanResults []URLScanResult
