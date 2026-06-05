@@ -230,3 +230,37 @@ func AnalyzeSecurity(auth AuthVerdict, attachments Attachments, urls []URLScanRe
 		Reasons:   reasons,
 	}
 }
+
+func HtmlResponse(response ApiResponse) Html {
+	color := "green"
+	icon := "🟢"
+	border := "border-green-200"
+	titleColor := "text-green-700"
+
+	switch response.Message {
+	case "Low Risk":
+		color = "blue"
+		icon = "🔵"
+		border = "border-blue-200"
+		titleColor = "text-blue-700"
+
+	case "Suspicious":
+		color = "yellow"
+		icon = "🟡"
+		border = "border-yellow-200"
+		titleColor = "text-yellow-700"
+
+	case "Malicious":
+		color = "red"
+		icon = "🔴"
+		border = "border-red-200"
+		titleColor = "text-red-700"
+	}
+
+	return Html{
+		Color:      color,
+		Icon:       icon,
+		Border:     border,
+		TitleColor: titleColor,
+	}
+}

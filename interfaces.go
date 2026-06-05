@@ -92,3 +92,10 @@ type ApiResponse struct {
 	Attachments    Attachments    `json:"attachments"`
 	UrlResults     URLScanResults `json:"url_scan_results"`
 }
+
+type Html struct {
+	Color      string `json:"color"`
+	Icon       string `json:"icon"`
+	Border     string `json:"border"`
+	TitleColor string `json:"title_color"`
+}

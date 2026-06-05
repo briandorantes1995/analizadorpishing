@@ -33,10 +33,10 @@ URLSCAN_API_KEY=<su_api_key>
 * [x] Interfaz web básica utilizando plantillas (`tmpl`).
 * [x] Publicar imagen Docker en GitHub Container Registry (GHCR).
 * [x] Mejorar y enriquecer los resultados del análisis.
+* [x] Mejorar la interfaz y dejar la api util para htmx o json
 
 ## Próximas mejoras
 
 * [ ] Proporcionar un archivo `docker-compose.yml` listo para despliegue.
 * [ ] Historial por usuario.
 * [ ] Extension de navegador.
-

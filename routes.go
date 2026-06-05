@@ -85,6 +85,21 @@ func RegisterRoutes(r *gin.Engine) {
 			UrlResults:     urlScanResults,
 		}
 
+		if c.GetHeader("HX-Request") == "true" {
+			html := HtmlResponse(response)
+
+			c.HTML(http.StatusOK, "resultado.tmpl", gin.H{
+				"message":    response.Message,
+				"score":      response.RiskScore,
+				"json":       response,
+				"icon":       html.Icon,
+				"border":     html.Border,
+				"titleColor": html.TitleColor,
+				"color":      html.Color,
+			})
+
+		}
+
 		c.JSON(http.StatusOK, response)
 	})
 }
