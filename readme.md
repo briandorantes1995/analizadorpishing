@@ -16,6 +16,7 @@ Las principales funcionalidades incluyen:
 
 1. Copie el archivo `docker-compose.yml` al entorno de ejecución.
 2. Configure sus credenciales en el archivo `.env`.
+3. Se contempla Caddy para el reverse proxy (se incluye ejemplo minimo de Caddyfile, ajustar al dominio), en caso de no necesitarlo omitirlo del docker-compose.yml
 
 ### Variables de entorno requeridas
 
