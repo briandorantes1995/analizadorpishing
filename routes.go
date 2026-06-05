@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,11 @@ func RegisterRoutes(r *gin.Engine) {
 	r.POST("/analize", func(c *gin.Context) {
 
 		fileHeader, err := c.FormFile("file")
+		ext := filepath.Ext(fileHeader.Filename)
+		if ext != ".eml" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Solo archivos .eml son permitidos"})
+			return
+		}
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
