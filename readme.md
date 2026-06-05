@@ -26,9 +26,10 @@ URLSCAN_API_KEY=<su_api_key>
 ```
 
 ## Endpoints
-Salud /health
-Api /analize
-Interfaz /index
+
+* Salud /health
+* Api /analize
+* Interfaz /index
 
 ## Funcionalidades implementadas
 
@@ -43,5 +44,7 @@ Interfaz /index
 * [x] Proporcionar un archivo `docker-compose.yml` listo para despliegue.
 
 ## Próximas mejoras
+
 * [ ] Historial por usuario.
 * [ ] Extension de navegador.
+
