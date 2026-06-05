@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -87,17 +88,18 @@ func RegisterRoutes(r *gin.Engine) {
 
 		if c.GetHeader("HX-Request") == "true" {
 			html := HtmlResponse(response)
+			prettyJSON, _ := json.MarshalIndent(response, "", "  ")
 
 			c.HTML(http.StatusOK, "resultado.tmpl", gin.H{
 				"message":    response.Message,
 				"score":      response.RiskScore,
-				"json":       response,
+				"json":       prettyJSON,
 				"icon":       html.Icon,
 				"border":     html.Border,
 				"titleColor": html.TitleColor,
 				"color":      html.Color,
 			})
-
+			return
 		}
 
 		c.JSON(http.StatusOK, response)
