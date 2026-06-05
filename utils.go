@@ -1,12 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
+	"net/url"
 	"regexp"
+	"strings"
+
+	"html"
 
 	"github.com/jhillyerd/enmime"
 )
@@ -26,84 +28,52 @@ func fetchIp(ip string) (*IPInfo, error) {
 	return &info, nil
 }
 
-func StartURLScan(targetURL, apiKey string) (*URLScanResponse, error) {
-	apikey := os.Getenv("URLSCAN_API_KEY")
-
-	if apikey == "" {
-		return nil, fmt.Errorf("URLSCAN_API_KEY not configured")
+// Filtrar y limpiar URLs antes de escanear
+func CleanAndFilterURLs(urls []string) []string {
+	skip := []string{
+		"schema.org",
+		"googleusercontent.com",
+		"gstatic.com",
 	}
 
-	payload := map[string]any{
-		"url":        targetURL,
-		"visibility": "public",
-		"country":    "mx",
+	seen := map[string]bool{}
+	result := []string{}
+
+	for _, u := range urls {
+		clean := html.UnescapeString(u)
+
+		// Quitar caracteres basura al final
+		clean = strings.TrimRight(clean, ").],; \t\n")
+
+		// Validar URL
+		parsed, err := url.Parse(clean)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			continue
+		}
+
+		// Deduplicar por host+path
+		key := parsed.Host + parsed.Path
+		if seen[key] {
+			continue
+		}
+
+		// Saltar dominios de infraestructura
+		skipURL := false
+		for _, s := range skip {
+			if strings.Contains(clean, s) {
+				skipURL = true
+				break
+			}
+		}
+		if skipURL {
+			continue
+		}
+
+		seen[key] = true
+		result = append(result, clean)
 	}
 
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(
-		http.MethodPost,
-		"https://urlscan.io/api/v1/scan/",
-		bytes.NewBuffer(body),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("API-Key", apiKey)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var scanResp URLScanResponse
-	if err := json.NewDecoder(resp.Body).Decode(&scanResp); err != nil {
-		return nil, err
-	}
-
-	return &scanResp, nil
-}
-
-func GetURLScanResult(uuid, apiKey string) (*URLScanResult, error) {
-	apikey := os.Getenv("URLSCAN_API_KEY")
-
-	if apikey == "" {
-		return nil, fmt.Errorf("URLSCAN_API_KEY not configured")
-	}
-	url := fmt.Sprintf(
-		"https://urlscan.io/api/v1/result/%s/",
-		uuid,
-	)
-
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("API-Key", apiKey)
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("scan not ready yet: %s", resp.Status)
-	}
-
-	var result URLScanResult
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-
-	return &result, nil
+	return result
 }
 
 func ExtraerURLs(texto string, html string) []string {
@@ -129,8 +99,9 @@ func ExtraerURLs(texto string, html string) []string {
 	for url := range urlsUnicas {
 		resultado = append(resultado, url)
 	}
+	urls := CleanAndFilterURLs(resultado)
 
-	return resultado
+	return urls
 }
 
 func AnalizarCabecerasAutenticacion(envelope *enmime.Envelope) AuthVerdict {
@@ -155,7 +126,6 @@ func AnalizarCabecerasAutenticacion(envelope *enmime.Envelope) AuthVerdict {
 
 	ip := reIP.FindString(authHeader)
 	if ip != "" {
-		fmt.Printf("IP encontrada en Authentication-Results: %s\n", ip)
 		ipInfo, err := fetchIp(ip)
 		if err != nil {
 			veredicto.IP = nil
@@ -178,4 +148,85 @@ func AnalizarCabecerasAutenticacion(envelope *enmime.Envelope) AuthVerdict {
 	}
 
 	return veredicto
+}
+
+func AnalyzeSecurity(auth AuthVerdict, attachments Attachments, urls []URLScanResult) SecurityAssessment {
+
+	score := 100
+	reasons := []string{}
+
+	// SPF
+	if auth.SPF != "pass" {
+		score -= 25
+		reasons = append(reasons, "SPF validation failed")
+	}
+
+	// DKIM
+	if auth.DKIM != "pass" {
+		score -= 25
+		reasons = append(reasons, "DKIM validation failed")
+	}
+
+	// DMARC
+	if auth.DMARC != "pass" {
+		score -= 30
+		reasons = append(reasons, "DMARC validation failed")
+	}
+
+	// URLs
+	for _, url := range urls {
+
+		if url.Verdicts.Overall.Malicious {
+			score -= 50
+			reasons = append(reasons, "Malicious URL detected")
+		}
+
+		if url.Verdicts.Urlscan.Malicious {
+			score -= 40
+			reasons = append(reasons, "URL flagged by URLScan")
+		}
+
+		if url.Verdicts.Engines.Malicious {
+			score -= 40
+			reasons = append(reasons, "URL flagged by security engines")
+		}
+	}
+
+	for _, attachment := range attachments {
+
+		if !attachment.Results.Found {
+			reasons = append(
+				reasons,
+				fmt.Sprintf(
+					"Attachment %s not found in VirusTotal",
+					attachment.Filename,
+				),
+			)
+
+			continue
+		}
+	}
+
+	if score < 0 {
+		score = 0
+	}
+
+	message := "Healthy"
+
+	switch {
+	case score >= 90:
+		message = "Healthy"
+	case score >= 70:
+		message = "Low Risk"
+	case score >= 40:
+		message = "Suspicious"
+	default:
+		message = "Malicious"
+	}
+
+	return SecurityAssessment{
+		Message:   message,
+		RiskScore: score,
+		Reasons:   reasons,
+	}
 }

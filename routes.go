@@ -1,10 +1,8 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jhillyerd/enmime"
@@ -49,6 +47,19 @@ func RegisterRoutes(r *gin.Engine) {
 
 		urls := ExtraerURLs(env.Text, env.HTML)
 
+		urlResults, err := StartURLScans(urls)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		time.Sleep(15 * time.Second)
+		urlScanResults, err := GetURLScanResults(urlResults)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
 		sumary := Summary{
 			From:              env.GetHeader("From"),
 			Subject:           env.GetHeader("Subject"),
@@ -56,31 +67,22 @@ func RegisterRoutes(r *gin.Engine) {
 			URLS_count:        len(urls),
 		}
 
-		attachments := make(Attachments, 0, len(env.Attachments))
-
-		for _, att := range env.Attachments {
-			hash := sha256.Sum256(att.Content)
-			hashString := hex.EncodeToString(hash[:])
-
-			results, err := virusTotal(&hashString)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			attachments = append(attachments, Attachment{
-				Filename:    att.FileName,
-				ContentType: att.ContentType,
-				Hash:        hashString,
-				Results:     results,
-			})
+		attachments, err := AnalyzeAttachments(env)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
 		}
 
+		result := AnalyzeSecurity(headers, attachments, urlScanResults)
+
 		response := ApiResponse{
-			Message:        "Healthy",
-			Authentication: headers,
+			Message:        result.Message,
+			RiskScore:      result.RiskScore,
+			Reasons:        result.Reasons,
 			Summary:        sumary,
+			Authentication: headers,
 			Attachments:    attachments,
+			UrlResults:     urlScanResults,
 		}
 
 		c.JSON(http.StatusOK, response)

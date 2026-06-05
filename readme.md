@@ -31,9 +31,12 @@ URLSCAN_API_KEY=<su_api_key>
 * [x] Integración con la API de VirusTotal.
 * [x] Integración con la API de urlscan.io.
 * [x] Interfaz web básica utilizando plantillas (`tmpl`).
+* [x] Publicar imagen Docker en GitHub Container Registry (GHCR).
+* [x] Mejorar y enriquecer los resultados del análisis.
 
 ## Próximas mejoras
 
-* [ ] Mejorar y enriquecer los resultados del análisis.
-* [ ] Publicar imagen Docker en GitHub Container Registry (GHCR).
 * [ ] Proporcionar un archivo `docker-compose.yml` listo para despliegue.
+* [ ] Historial por usuario.
+* [ ] Extension de navegador.
+
