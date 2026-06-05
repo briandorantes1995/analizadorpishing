@@ -47,4 +47,3 @@ URLSCAN_API_KEY=<su_api_key>
 
 * [ ] Historial por usuario.
 * [ ] Extension de navegador.
-
