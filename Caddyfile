@@ -1,0 +1,4 @@
+analize.example.com {
+    encode zstd gzip
+    reverse_proxy email-analyzer:8080
+}

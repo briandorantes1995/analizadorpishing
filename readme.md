@@ -24,6 +24,11 @@ VIRUSTOTAL_API_KEY=<su_api_key>
 URLSCAN_API_KEY=<su_api_key>
 ```
 
+## Endpoints
+Salud /health
+Api /analize
+Interfaz /index
+
 ## Funcionalidades implementadas
 
 * [x] Extracción de cabeceras del correo.
@@ -34,9 +39,8 @@ URLSCAN_API_KEY=<su_api_key>
 * [x] Publicar imagen Docker en GitHub Container Registry (GHCR).
 * [x] Mejorar y enriquecer los resultados del análisis.
 * [x] Mejorar la interfaz y dejar la api util para htmx o json
+* [x] Proporcionar un archivo `docker-compose.yml` listo para despliegue.
 
 ## Próximas mejoras
-
-* [ ] Proporcionar un archivo `docker-compose.yml` listo para despliegue.
 * [ ] Historial por usuario.
 * [ ] Extension de navegador.

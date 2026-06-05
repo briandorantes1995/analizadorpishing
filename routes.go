@@ -93,7 +93,7 @@ func RegisterRoutes(r *gin.Engine) {
 			c.HTML(http.StatusOK, "resultado.tmpl", gin.H{
 				"message":    response.Message,
 				"score":      response.RiskScore,
-				"json":       prettyJSON,
+				"json":       string(prettyJSON),
 				"icon":       html.Icon,
 				"border":     html.Border,
 				"titleColor": html.TitleColor,
