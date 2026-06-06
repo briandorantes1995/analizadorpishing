@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+//go:embed templates/*
 var templateFS embed.FS
 
 func main() {
