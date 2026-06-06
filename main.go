@@ -1,11 +1,15 @@
 package main
 
 import (
+	"embed"
+	"html/template"
 	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
+
+var templateFS embed.FS
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -14,7 +18,8 @@ func main() {
 
 	r := gin.Default()
 	r.MaxMultipartMemory = 50 << 20
-	r.LoadHTMLGlob("templates/*")
+	templ := template.Must(template.New("").ParseFS(templateFS, "templates/*"))
+	r.SetHTMLTemplate(templ)
 
 	RegisterRoutes(r)
 
